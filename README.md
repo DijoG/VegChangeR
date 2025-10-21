@@ -27,7 +27,7 @@ devtools::install_github("DijoG/VegChangeR")
 ```r
 require(VegChangeR);require(terra);require(sf)
 
-# Load vegetation data (binary: 0 = non-vegetation, 1 = vegetation)
+# Load vegetation stack (binary: 0 = non-vegetation, 1 = vegetation)
 veg_data <- rast("path/to/vegetation_data.tif")
 names(veg_data)
 
@@ -57,9 +57,9 @@ VegChangeR::save_changes(changes, "path/to/output_directory")
 ### Memory-optimized processing
 
 ```r
-# Load large vegetation data (binary: 0 = non-vegetation, 1 = vegetation)
+# Load large vegetation stack (binary: 0 = non-vegetation, 1 = vegetation)
 large_veg_data <- rast("path/to/vegetation_data.tif")
-names(veg_data)
+names(large_veg_data)
 
 # Run the memory-optimized process 
 VegChangeR::CHUNKWISE_optimal_memfrac()
@@ -83,7 +83,29 @@ VegChangeR::analyze_vegetation_changes(polygon_results)
 VegChangeR::plot_polygon_changes(polygon_results)
 ```
 
+### Parllelized memory-optimized processing
+```r
+require(future);require(furrr)
 
+# Define the number of cores
+plan(multisession, workers = 3)
+
+# Target dates
+target_dates <- c("2025-06-15", "2024-06-15", "2023-06-15")
+
+# Define and create directories for processing 
+temp_dirs <- c("D:/temp_vc_worker1", "D:/temp_vc_worker2", "D:/temp_vc_worker3")
+walk(temp_dirs, ~dir.create(.x, showWarnings = FALSE, recursive = TRUE))
+
+# Run
+results <- future_map2(
+  target_dates, 
+  temp_dirs,
+  function(date, temp_dir) {
+    cat("Processing", date, "with temp dir:", temp_dir, "\n")
+    VegChangeR::CHUNKWISE_get_VC_TOdisk(large_veg_data, date, temp_dir = temp_dir, auto_optimize = TRUE)},
+  .progress = TRUE)
+```
 
 
 
