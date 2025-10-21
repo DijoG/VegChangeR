@@ -83,29 +83,6 @@ VegChangeR::analyze_vegetation_changes(polygon_results)
 VegChangeR::plot_polygon_changes(polygon_results)
 ```
 
-### Parallelized memory-optimized processing
-```r
-require(furrr)
-
-# Define the number of cores
-plan(multisession, workers = 3)
-
-# Target dates
-target_dates <- c("2025-06-15", "2024-06-15", "2023-06-15")
-
-# Define and create directories for processing 
-temp_dirs <- c("D:/temp_vc_worker1", "D:/temp_vc_worker2", "D:/temp_vc_worker3")
-walk(temp_dirs, ~dir.create(.x, showWarnings = FALSE, recursive = TRUE))
-
-# Run
-results <- future_map2(
-  target_dates, 
-  temp_dirs,
-  function(date, temp_dir) {
-    cat("Processing", date, "with temp dir:", temp_dir, "\n")
-    VegChangeR::CHUNKWISE_get_VC_TOdisk(large_veg_data, date, temp_dir = temp_dir, auto_optimize = TRUE)},
-  .progress = TRUE)
-```
 
 
 
