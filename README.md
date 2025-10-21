@@ -85,7 +85,7 @@ VegChangeR::plot_polygon_changes(polygon_results)
 
 ### Parallelized memory-optimized processing
 ```r
-require(future);require(furrr)
+require(furrr)
 
 # Define the number of cores
 plan(multisession, workers = 3)
