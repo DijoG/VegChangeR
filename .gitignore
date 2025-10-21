@@ -1,0 +1,50 @@
+# R package files
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata/
+*.Rproj
+
+# Package build and install files
+VegChangeR.Rcheck/
+VegChangeR_*.tar.gz
+src/*.o
+src/*.so
+src/*.dll
+
+# Documentation
+man/
+NAMESPACE
+inst/doc/
+
+# Temporary files
+*.tar.gz
+*.tgz
+*.zip
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# R environment variables
+.Renviron
+
+# knitr and R markdown default cache directories
+*_cache/
+/cache/
+
+# Temporary files created by R markdown
+*.utf8.md
+*.knit.md
+
+# RStudio files
+.Rprofile
+
+# Example data files (if any)
+inst/extdata/*.tif
+inst/extdata/*.shp
+inst/extdata/*.zip
+
+# Test output
+tests/testthat/_output/
+tests/testthat/_plots/
