@@ -25,7 +25,7 @@ devtools::install_github("DijoG/VegChangeR")
 ### Quick start
 
 ```r
-require(VegChangeR);require(terra)
+require(VegChangeR);require(terra);require(sf)
 
 # Load vegetation data (binary: 0 = non-vegetation, 1 = vegetation)
 veg_data <- rast("path/to/vegetation_data.tif")
