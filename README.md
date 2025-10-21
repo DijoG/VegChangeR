@@ -83,7 +83,7 @@ VegChangeR::analyze_vegetation_changes(polygon_results)
 VegChangeR::plot_polygon_changes(polygon_results)
 ```
 
-### Parllelized memory-optimized processing
+### Parallelized memory-optimized processing
 ```r
 require(future);require(furrr)
 
