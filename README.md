@@ -1,6 +1,6 @@
 # VegChangeR
 
-A comprehensive R package for vegetation change analysis using satellite imagery and raster data. Supports multiple time scales and memory-optimized processing for large datasets.
+A comprehensive R package for vegetation change analysis using raster time-series (stack) derived from satellite. Supports multiple time scales and memory-optimized processing for large datasets.
 
 ## Features
 
