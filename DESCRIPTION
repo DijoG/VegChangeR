@@ -1,7 +1,7 @@
 Package: VegChangeR
 Title: Vegetation Change Analysis Tool
 Version: 0.1.0
-Authors@R: person("Gergo Dioszegi", "dijogergo@gmail.com", role = c("aut", "cre"))
+Authors@R: person(given = "Gergo", family = "Dioszegi", email = "dijogergo@gmail.com", role = c("aut", "cre"))
 Description: A comprehensive tool for analyzing vegetation changes over time using
     stacked (time series) satellite imagery-obtained raster data. Supports multiple time scales and memory-optimized processing.
 License: MIT + file LICENSE
