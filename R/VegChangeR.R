@@ -1017,26 +1017,43 @@ extract_changes_exact <- function(vc_changes, polygons, max_polygons = NULL) {
     cat("Processing subset of", max_polygons, "polygons\n")
   }
   
+  # Extract target date from metadata and format it
+  target_date = vc_changes$metadata$target_date
+  date_suffix = gsub("-", "", as.character(target_date))
+  
+  # Create dynamic column names
+  change_cols = c(
+    paste0(date_suffix, "_twoW_change"),
+    paste0(date_suffix, "_oneM_change"), 
+    paste0(date_suffix, "_oneY_change"),
+    paste0(date_suffix, "_fiveY_change")
+  )
+  
+  cat("Using column prefix:", date_suffix, "\n")
+  
   # Transform polygons to match raster CRS
   polygons_proj = st_transform(polygons, crs(vc_changes$twoW))
   
-  # Use exactextractr for precise extraction
+  # Use exactextractr for precise extraction with dynamic column names
   cat("Extracting 2-week changes...\n")
-  polygons_proj$twoW_change = exactextractr::exact_extract(vc_changes$twoW, polygons_proj, 'mean')
+  polygons_proj[[change_cols[1]]] = exactextractr::exact_extract(vc_changes$twoW, polygons_proj, 'mean')
   
   cat("Extracting 1-month changes...\n")
-  polygons_proj$oneM_change = exactextractr::exact_extract(vc_changes$oneM, polygons_proj, 'mean')
+  polygons_proj[[change_cols[2]]] = exactextractr::exact_extract(vc_changes$oneM, polygons_proj, 'mean')
   
   cat("Extracting 1-year changes...\n")
-  polygons_proj$oneY_change = exactextractr::exact_extract(vc_changes$oneY, polygons_proj, 'mean')
+  polygons_proj[[change_cols[3]]] = exactextractr::exact_extract(vc_changes$oneY, polygons_proj, 'mean')
   
   cat("Extracting 5-year changes...\n")
-  polygons_proj$fiveY_change = exactextractr::exact_extract(vc_changes$fiveY, polygons_proj, 'mean')
+  polygons_proj[[change_cols[4]]] = exactextractr::exact_extract(vc_changes$fiveY, polygons_proj, 'mean')
   
   # Round change columns to 3 decimal places
-  change_cols = c("twoW_change", "oneM_change", "oneY_change", "fiveY_change")
   polygons_proj = polygons_proj %>%
     mutate(across(all_of(change_cols), ~ ifelse(is.nan(.) | is.na(.), ., round(., 3))))
+  
+  # Add metadata as attribute for reference
+  attr(polygons_proj, "change_columns") <- change_cols
+  attr(polygons_proj, "target_date") <- target_date
   
   return(polygons_proj)
 }
@@ -1058,10 +1075,19 @@ extract_changes_exact <- function(vc_changes, polygons, max_polygons = NULL) {
 #'
 #' @export 
 analyze_vegetation_changes <- function(polygons_with_changes, output_dir = NULL) {
+  # Auto-detect change columns (columns containing "change" in name)
+  change_cols = names(polygons_with_changes)[grepl("change", names(polygons_with_changes), ignore.case = TRUE)]
+  
+  if(length(change_cols) == 0) {
+    stop("No change columns found in the data. Make sure you used extract_changes_exact() first.")
+  }
+  
+  cat("Detected change columns:", paste(change_cols, collapse = ", "), "\n")
+  
   # Summary statistics
   changes_df = polygons_with_changes %>% 
     st_drop_geometry() %>% 
-    select(contains("change"))
+    select(all_of(change_cols))
   
   # Create results list to store statistics
   results_list = list()
@@ -1072,9 +1098,10 @@ analyze_vegetation_changes <- function(polygons_with_changes, output_dir = NULL)
   output_lines = c(output_lines, paste("Analysis date:", Sys.Date()))
   output_lines = c(output_lines, paste("Total polygons:", nrow(polygons_with_changes)))
   output_lines = c(output_lines, paste("Polygons with change data:", sum(complete.cases(changes_df))))
+  output_lines = c(output_lines, paste("Change periods analyzed:", length(change_cols)))
   output_lines = c(output_lines, "")
   
-  for(col in names(changes_df)) {
+  for(col in change_cols) {
     vals = changes_df[[col]]
     vals_clean = vals[!is.na(vals)]
     
@@ -1149,24 +1176,48 @@ analyze_vegetation_changes <- function(polygons_with_changes, output_dir = NULL)
 #' @export
 #' @import ggplot2 patchwork dplyr tidyr
 plot_polygon_changes <- function(polygons_with_changes) {
-  library(patchwork)
+  # Auto-detect change columns
+  change_cols = names(polygons_with_changes)[grepl("change", names(polygons_with_changes), ignore.case = TRUE)]
+  
+  if(length(change_cols) == 0) {
+    stop("No change columns found in the data.")
+  }
+  
+  # Extract target date from column names (take from first column)
+  first_col = change_cols[1]
+  date_part = substr(first_col, 1, 8)  # YYYYMMDD part
+  target_date = paste0(
+    substr(date_part, 1, 4), "-", 
+    substr(date_part, 5, 6), "-", 
+    substr(date_part, 7, 8)
+  )
+  
+  # Create better period labels from column names
   changes_long = polygons_with_changes %>% 
     st_drop_geometry() %>% 
-    select(contains("change")) %>%
+    select(all_of(change_cols)) %>%
     pivot_longer(
-      cols = everything(),
+      cols = all_of(change_cols),
       names_to = "period",
       values_to = "change_value"
     ) %>%
     mutate(
-      period = factor(period, 
-                      levels = c("twoW_change", "oneM_change", "oneY_change", "fiveY_change"),
-                      labels = c("2-Week", "1-Month", "1-Year", "5-Year"))
+      # Extract period type from column names
+      period_type = case_when(
+        grepl("twoW", period) ~ "2-Week",
+        grepl("oneM", period) ~ "1-Month", 
+        grepl("oneY", period) ~ "1-Year",
+        grepl("fiveY", period) ~ "5-Year",
+        TRUE ~ "Unknown"
+      ),
+      # Use clean period labels for panels
+      period_label = factor(period_type,
+                            levels = c("2-Week", "1-Month", "1-Year", "5-Year"))
     )
   
   # Calculate summary stats for annotations
   stats_df = changes_long %>%
-    group_by(period) %>%
+    group_by(period_label) %>%
     summarise(
       mean_val = mean(change_value, na.rm = TRUE),
       median_val = median(change_value, na.rm = TRUE),
@@ -1183,9 +1234,9 @@ plot_polygon_changes <- function(polygons_with_changes) {
     geom_vline(xintercept = 0, color = "grey15", linewidth = .8) +
     geom_vline(data = stats_df, aes(xintercept = mean_val), 
                color = "firebrick3", linewidth = .8) +
-    facet_wrap(~ period, ncol = 2) +  # scales = "free_y"
+    facet_wrap(~ period_label, ncol = 2) +
     labs(
-      title = "Vegetation Change Distribution",
+      title = paste("Vegetation Change Distribution (", target_date, ")"),
       subtitle = "Black line = Zero change | Red line = Mean",
       x = "Net Change Value (-1 = Complete Loss, 1 = Complete Gain)",
       y = "Density"
@@ -1263,3 +1314,5 @@ clear_terra_cache <- function() {
   }
   gc()
 }
+
+
