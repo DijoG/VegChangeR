@@ -78,8 +78,13 @@ study_area <- st_read("path/to/polygons.shp")
 # Extract changes to polygons
 polygon_results <- VegChangeR::extract_changes_exact(changes, study_area)
 
-# Analyze and visualize results
+# Analyze results
 VegChangeR::analyze_vegetation_changes(polygon_results)
+```
+<img align="bottom" src="https://raw.githubusercontent.com/DijoG/storage/main/README/VChR_table.png">
+
+```r
+# Visualize results
 VegChangeR::plot_polygon_changes(polygon_results)
 ```
 <img align="bottom" src="https://raw.githubusercontent.com/DijoG/storage/main/README/VChR_01.png">
