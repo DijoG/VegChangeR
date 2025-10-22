@@ -1019,17 +1019,17 @@ extract_changes_exact <- function(vc_changes, polygons, max_polygons = NULL) {
   
   # Extract target date from metadata and format it
   target_date = vc_changes$metadata$target_date
-  date_suffix = gsub("-", "", as.character(target_date))
+  date_fix = gsub("-", "", as.character(target_date))
   
   # Create dynamic column names
   change_cols = c(
-    paste0(date_suffix, "_twoW_change"),
-    paste0(date_suffix, "_oneM_change"), 
-    paste0(date_suffix, "_oneY_change"),
-    paste0(date_suffix, "_fiveY_change")
+    paste0("twoW_change_", date_fix),
+    paste0("oneM_change_", date_fix), 
+    paste0("oneY_change_", date_fix),
+    paste0("fiveY_change_", date_fix)
   )
   
-  cat("Using column prefix:", date_suffix, "\n")
+  cat("Using date as column suffix:", date_fix, "\n")
   
   # Transform polygons to match raster CRS
   polygons_proj = st_transform(polygons, crs(vc_changes$twoW))
@@ -1185,7 +1185,7 @@ plot_polygon_changes <- function(polygons_with_changes) {
   
   # Extract target date from column names (take from first column)
   first_col = change_cols[1]
-  date_part = substr(first_col, 1, 8)  # YYYYMMDD part
+  date_part = substr(first_col, 13, 20)  # YYYYMMDD part
   target_date = paste0(
     substr(date_part, 1, 4), "-", 
     substr(date_part, 5, 6), "-", 
