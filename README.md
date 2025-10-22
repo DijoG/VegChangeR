@@ -79,7 +79,7 @@ study_area <- st_read("path/to/polygons.shp")
 polygon_results <- VegChangeR::extract_changes_exact(changes, study_area)
 
 # Analyze results
-VegChangeR::analyze_vegetation_changes(polygon_results)
+VegChangeR::analyze_vegetation_changes(polygon_results, output_dir = "D:/HealthMetric/FINALRESULT")
 ```
 <img align="bottom" src="https://raw.githubusercontent.com/DijoG/storage/main/VChR_table.png">
 
