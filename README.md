@@ -89,4 +89,9 @@ VegChangeR::plot_polygon_changes(polygon_results)
 ```
 <img align="bottom" src="https://raw.githubusercontent.com/DijoG/storage/main/README/VChR_01.png">
 
+```r
+# Classification to colors 
+VegChangeR::classify_change_colors(polygon_results)
+```
+
 

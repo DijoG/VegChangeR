@@ -1260,6 +1260,84 @@ plot_polygon_changes <- function(polygons_with_changes) {
   return(pp)
 }
 
+#' Classify vegetation changes into color categories
+#'
+#' Creates new columns that classify vegetation change values into color categories
+#' for visualization. Useful for creating maps with consistent color schemes.
+#'
+#' @param polygons_with_changes SF object from extract_changes_exact()
+#' @param gain_color Color name for gain (>= 0) - default: "forestgreen"
+#' @param loss_color Color name for loss (< 0) - default: "firebrick3" 
+#' @param partial_loss_color Color name for partial loss (< 0 but != -1) - default: "orange"
+#' @param no_data_color Color name for NA values - default: NA
+#'
+#' @return The input polygons with additional color classification columns
+#'         named "twoW_change", "oneM_change", "oneY_change", "fiveY_change"
+#'
+#' @examples
+#' \dontrun{
+#' VCnetC_FINALIZED <- classify_change_colors(VCnetC_FINAL)
+#' }
+#'
+#' @export
+classify_change_colors <- function(polygons_with_changes, 
+                                   gain_color = "forestgreen",
+                                   loss_color = "firebrick3",
+                                   partial_loss_color = "orange", 
+                                   no_data_color = NA) {
+  
+  # Auto-detect change columns
+  change_cols = names(polygons_with_changes)[grepl("change", names(polygons_with_changes), ignore.case = TRUE)]
+  
+  if(length(change_cols) == 0) {
+    stop("No change columns found in the data.")
+  }
+  
+  cat("Classifying", length(change_cols), "change columns...\n")
+  
+  # Define the exact new column names we want
+  new_cols = c("twoW_change", "oneM_change", "oneY_change", "fiveY_change")
+  
+  # Check if we have matching columns
+  if(length(change_cols) != length(new_cols)) {
+    warning("Expected 4 change columns but found ", length(change_cols), 
+            ". Proceeding with available columns.")
+  }
+  
+  # Apply classification to each change column
+  for(i in seq_along(change_cols)) {
+    change_col = change_cols[i]
+    
+    # Determine which new column name to use based on the pattern
+    if(grepl("twoW", change_col)) {
+      new_col = "twoW_change"
+    } else if(grepl("oneM", change_col)) {
+      new_col = "oneM_change"
+    } else if(grepl("oneY", change_col)) {
+      new_col = "oneY_change"
+    } else if(grepl("fiveY", change_col)) {
+      new_col = "fiveY_change"
+    } else {
+      # Skip if pattern doesn't match
+      next
+    }
+    
+    cat("Processing:", change_col, "->", new_col, "\n")
+    
+    polygons_with_changes[[new_col]] = ifelse(
+      polygons_with_changes[[change_col]] >= 0, gain_color,
+      ifelse(is.na(polygons_with_changes[[change_col]]), no_data_color,
+             ifelse(polygons_with_changes[[change_col]] < 0 & polygons_with_changes[[change_col]] != -1, 
+                    partial_loss_color, loss_color))
+    )
+  }
+  
+  cat("Color classification completed!\n")
+  cat("Added columns: twoW_change, oneM_change, oneY_change, fiveY_change\n")
+  
+  return(polygons_with_changes)
+}
+
 #' Helper function to recommend memory mode based on system
 #'
 #' Provides guidance on selecting the appropriate memory processing option
