@@ -81,7 +81,7 @@ polygon_results <- VegChangeR::extract_changes_exact(changes, study_area)
 # Analyze results
 VegChangeR::analyze_vegetation_changes(polygon_results)
 ```
-<img align="bottom" src="https://raw.githubusercontent.com/DijoG/storage/main/README/VChR_table.png">
+<img align="bottom" src="https://raw.githubusercontent.com/DijoG/storage/main/VChR_table.png">
 
 ```r
 # Visualize results
