@@ -13,7 +13,7 @@ src/*.so
 src/*.dll
 
 # Documentation
-man/
+# man/
 NAMESPACE
 inst/doc/
 
