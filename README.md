@@ -91,7 +91,10 @@ VegChangeR::plot_polygon_changes(polygon_results)
 
 ```r
 # Classification to colors 
-VegChangeR::classify_change_colors(polygon_results)
+polygon_classcol <- VegChangeR::classify_change_colors(polygon_results)
+
+# Write out
+st_write(polygon_classcol, "path/to/polygons_classcol.gpkg") # .geojson or .shp
 ```
 
 
