@@ -40,8 +40,11 @@ and handles duplicate dates automatically.
 }
 \examples{
 \dontrun{
-# Load your vegetation raster
+# Load your vegetation raster stack
 veg_data <- rast("path/to/vegetation_data.tif")
+
+# Obtain stack layer names
+names(veg_data)
 
 # Calculate changes for specific date
 changes <- get_VC_optimized0(veg_data, "2023-06-15", processing_option = "medium")

@@ -40,8 +40,11 @@ NULL
 #'
 #' @examples
 #' \dontrun{
-#' # Load your vegetation raster
+#' # Load your vegetation raster stack
 #' veg_data <- rast("path/to/vegetation_data.tif")
+#' 
+#' # Obtain stack layer names
+#' names(veg_data)
 #' 
 #' # Calculate changes for specific date
 #' changes <- get_VC_optimized0(veg_data, "2023-06-15", processing_option = "medium")
@@ -292,8 +295,17 @@ get_VC_optimized0 <- function(inputRAST,
 #'
 #' @examples
 #' \dontrun{
-#' changes <- get_VC_optimized(veg_data, "2023-06-15")
-#' # Only shows gain (+1) and loss (-1)
+#' # Load your vegetation raster stack
+#' veg_data <- rast("path/to/vegetation_data.tif")
+#' 
+#' # Obtain stack layer names
+#' names(veg_data)
+#' 
+#' # Calculate changes for specific date
+#' changes <- get_VC_optimized(veg_data, "2023-06-15", processing_option = "medium")
+#' 
+#' # Plot results
+#' plot(changes$oneY)
 #' }
 #'
 #' @export
@@ -520,8 +532,6 @@ get_VC_optimized <- function(inputRAST,
   cat("Note: 0 values (no change) have been masked out - only vegetation gain (+1) and loss (-1) remain\n")
   return(result_list)
 }
-
-
 
 #' Disk-based vegetation change analysis
 #'
