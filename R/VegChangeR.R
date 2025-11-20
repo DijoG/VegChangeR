@@ -190,7 +190,7 @@ get_VC_optimized0 <- function(inputRAST,
         # 2: Stable (vegetation persisted)
         v_final = v_combined
         v_final[!final_mask] = NA  # Mask out non-vegetated areas
-        v_final[v_final == 0] = 0   # Mask out 0 values as requested
+        v_final[v_final == 0] = NA   # Mask out 0 values as requested
         v_final[v_final == 2] = 0   # Convert stable vegetation from 2 to 0
         v_final[v_final == 3] = 1   # Handle edge case where gain + stable = 3
         
