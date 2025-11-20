@@ -222,9 +222,9 @@ get_VC_optimized0 <- function(inputRAST,
       # Final classification
       change_final = combined * final_mask
       change_final[!final_mask] = NA  # Mask out non-vegetated areas
-      change_final = ifel(change_final == 2, 0, change_final)   # Stable vegetation → 0
-      change_final = ifel(change_final == 3, 1, change_final)   # Edge case → 1  
-      change_final = ifel(change_final == 0, NA, change_final)  # Stable non-vegetation → NA
+      change_final = ifel(change_final == 2, 0,                       # Stable vegetation → 0
+                          ifel(change_final == 0, NA, change_final))  # Stable non-veg → NA
+      change_final = ifel(change_final == 3, 1, change_final)         # Edge case → 1  
       
       change_rast = change_final
     }
@@ -739,8 +739,8 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
       
       change_final = combined * final_mask
       change_final[!final_mask] = NA
-      change_final = ifel(change_final == 0, NA, change_final)  # Stable non-veg → NA
-      change_final = ifel(change_final == 2, 0, change_final)   # Stable vegetation → 0  
+      change_final = ifel(change_final == 2, 0,                       # Stable vegetation → 0
+                          ifel(change_final == 0, NA, change_final))  # Stable non-veg → NA  # Stable non-veg → NA
       change_final = ifel(change_final == 3, 1, change_final)   # Edge case → 1
       
       return(change_final)
