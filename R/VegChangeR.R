@@ -222,7 +222,7 @@ get_VC_optimized0 <- function(inputRAST,
       # Final classification
       change_final = combined * final_mask
       change_final[!final_mask] = NA  # Mask out non-vegetated areas
-      change_final = ifel(change_final == 0, NA, change_final)  # Mask out 0 values
+      change_final = ifel(change_final == 0, 0, change_final)   # Stable
       change_final = ifel(change_final == 2, 0, change_final)   # Stable → 0
       change_final = ifel(change_final == 3, 1, change_final)   # Edge case
       

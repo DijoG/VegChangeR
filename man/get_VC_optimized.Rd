@@ -28,8 +28,17 @@ masking out stable vegetation and no-change areas.
 }
 \examples{
 \dontrun{
-changes <- get_VC_optimized(veg_data, "2023-06-15")
-# Only shows gain (+1) and loss (-1)
+# Load your vegetation raster stack
+veg_data <- rast("path/to/vegetation_data.tif")
+
+# Obtain stack layer names
+names(veg_data)
+
+# Calculate changes for specific date
+changes <- get_VC_optimized(veg_data, "2023-06-15", processing_option = "medium")
+
+# Plot results
+plot(changes$oneY)
 }
 
 }
