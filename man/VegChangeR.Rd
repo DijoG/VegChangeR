@@ -2,10 +2,23 @@
 % Please edit documentation in R/VegChangeR.R
 \docType{package}
 \name{VegChangeR}
+\alias{VegChangeR-package}
 \alias{VegChangeR}
 \title{Vegetation Change Analysis Tool}
 \description{
 A comprehensive package for analyzing vegetation changes over multiple time scales
 using satellite imagery and raster data. Supports memory-optimized processing
 for large datasets.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/DijoG/VegChangeR}
+  \item Report bugs at \url{https://github.com/DijoG/VegChangeR/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Gergo Dioszegi \email{dijogergo@gmail.com}
+
 }

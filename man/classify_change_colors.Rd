@@ -7,19 +7,25 @@
 classify_change_colors(
   polygons_with_changes,
   gain_color = "forestgreen",
-  loss_color = "firebrick3",
+  partial_gain_color = "lightgreen",
+  stable_color = "gray80",
   partial_loss_color = "orange",
+  loss_color = "firebrick3",
   no_data_color = NA
 )
 }
 \arguments{
 \item{polygons_with_changes}{SF object from extract_changes_exact()}
 
-\item{gain_color}{Color name for gain (>= 0) - default: "forestgreen"}
+\item{gain_color}{Color name for significant gain (>= 0.8) - default: "forestgreen"}
 
-\item{loss_color}{Color name for loss (< 0) - default: "firebrick3"}
+\item{partial_gain_color}{Color name for partial gain (<0.8 but >0) - default: "lightgreen"}
 
-\item{partial_loss_color}{Color name for partial loss (< 0 but != -1) - default: "orange"}
+\item{stable_color}{Color name for stable values (=0) - default: "gray80"}
+
+\item{partial_loss_color}{Color name for partial loss (<0 but >= -0.8) - default: "orange"}
+
+\item{loss_color}{Color name for significant loss (< -0.8) - default: "firebrick3"}
 
 \item{no_data_color}{Color name for NA values - default: NA}
 }
