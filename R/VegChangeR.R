@@ -1276,9 +1276,11 @@ plot_polygon_changes <- function(polygons_with_changes) {
 #' for visualization. Useful for creating maps with consistent color schemes.
 #'
 #' @param polygons_with_changes SF object from extract_changes_exact()
-#' @param gain_color Color name for gain (>= 0) - default: "forestgreen"
-#' @param loss_color Color name for loss (< 0) - default: "firebrick3" 
-#' @param partial_loss_color Color name for partial loss (< 0 but != -1) - default: "orange"
+#' @param gain_color Color name for significant gain (>= 0.8) - default: "forestgreen"
+#' @param partial_gain_color Color name for partial gain (<0.8 but >0) - default: "lightgreen"
+#' @param stable_color Color name for stable values (=0) - default: "gray80"
+#' @param partial_loss_color Color name for partial loss (<0 but >= -0.8) - default: "orange"
+#' @param loss_color Color name for significant loss (< -0.8) - default: "firebrick3"
 #' @param no_data_color Color name for NA values - default: NA
 #'
 #' @return The input polygons with additional color classification columns
@@ -1292,21 +1294,23 @@ plot_polygon_changes <- function(polygons_with_changes) {
 #' @export
 classify_change_colors <- function(polygons_with_changes, 
                                    gain_color = "forestgreen",
-                                   loss_color = "firebrick3",
+                                   partial_gain_color = "lightgreen",
+                                   stable_color = "gray80",
                                    partial_loss_color = "orange", 
+                                   loss_color = "firebrick3",
                                    no_data_color = NA) {
   
   # Auto-detect change columns
-  change_cols = names(polygons_with_changes)[grepl("change", names(polygons_with_changes), ignore.case = TRUE)]
+  change_cols <- names(polygons_with_changes)[grepl("change", names(polygons_with_changes), ignore.case = TRUE)]
   
   if(length(change_cols) == 0) {
     stop("No change columns found in the data.")
   }
   
-  cat("Classifying", length(change_cols), "change columns...\n")
+  message("Classifying ", length(change_cols), " change columns...")
   
   # Define the exact new column names we want
-  new_cols = c("twoW_change", "oneM_change", "oneY_change", "fiveY_change")
+  new_cols <- c("twoW_change", "oneM_change", "oneY_change", "fiveY_change")
   
   # Check if we have matching columns
   if(length(change_cols) != length(new_cols)) {
@@ -1316,34 +1320,45 @@ classify_change_colors <- function(polygons_with_changes,
   
   # Apply classification to each change column
   for(i in seq_along(change_cols)) {
-    change_col = change_cols[i]
+    change_col <- change_cols[i]
     
     # Determine which new column name to use based on the pattern
     if(grepl("twoW", change_col)) {
-      new_col = "twoW_change"
+      new_col <- "twoW_change"
     } else if(grepl("oneM", change_col)) {
-      new_col = "oneM_change"
+      new_col <- "oneM_change"
     } else if(grepl("oneY", change_col)) {
-      new_col = "oneY_change"
+      new_col <- "oneY_change"
     } else if(grepl("fiveY", change_col)) {
-      new_col = "fiveY_change"
+      new_col <- "fiveY_change"
     } else {
       # Skip if pattern doesn't match
       next
     }
     
-    cat("Processing:", change_col, "->", new_col, "\n")
+    message("Processing: ", change_col, " -> ", new_col)
     
-    polygons_with_changes[[new_col]] = ifelse(
-      polygons_with_changes[[change_col]] >= 0, gain_color,
-      ifelse(is.na(polygons_with_changes[[change_col]]), no_data_color,
-             ifelse(polygons_with_changes[[change_col]] < 0 & polygons_with_changes[[change_col]] != -1, 
-                    partial_loss_color, loss_color))
+    polygons_with_changes[[new_col]] <- ifelse(
+      is.na(polygons_with_changes[[change_col]]), no_data_color,
+      ifelse(polygons_with_changes[[change_col]] >= 0.8, gain_color,
+             ifelse(polygons_with_changes[[change_col]] > 0 & polygons_with_changes[[change_col]] < 0.8, 
+                    partial_gain_color,
+                    ifelse(polygons_with_changes[[change_col]] == 0, stable_color,
+                           ifelse(polygons_with_changes[[change_col]] < 0 & polygons_with_changes[[change_col]] >= -0.8, 
+                                  partial_loss_color,
+                                  loss_color))))
     )
   }
   
-  cat("Color classification completed!\n")
-  cat("Added columns: twoW_change, oneM_change, oneY_change, fiveY_change\n")
+  message("Color classification completed!")
+  message("Added columns: twoW_change, oneM_change, oneY_change, fiveY_change")
+  message("Classification categories:")
+  message("  - Significant gain (>= 0.8): ", gain_color)
+  message("  - Partial gain (0 < x < 0.8): ", partial_gain_color)
+  message("  - Stable (= 0): ", stable_color)
+  message("  - Partial loss (-0.8 <= x < 0): ", partial_loss_color)
+  message("  - Significant loss (< -0.8): ", loss_color)
+  message("  - No data (NA): ", ifelse(is.na(no_data_color), "NA", no_data_color))
   
   return(polygons_with_changes)
 }
