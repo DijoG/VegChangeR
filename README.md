@@ -84,7 +84,7 @@ VegChangeR::analyze_vegetation_changes(polygon_results, output_dir = "D:/HealthM
 <img align="bottom" src="https://raw.githubusercontent.com/DijoG/storage/main/VChR_table.png">
 
 ```r
-# Visualize results
+# View results
 VegChangeR::plot_polygon_changes(polygon_results)
 ```
 <img align="bottom" src="https://raw.githubusercontent.com/DijoG/storage/main/README/VChR_01.png">
