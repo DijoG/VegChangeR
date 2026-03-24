@@ -24,7 +24,7 @@ available system RAM.
 \examples{
 \dontrun{
 settings <- CHUNKWISE_optimal_memfrac()
-cat("Use chunk size:", settings$chunk_size, "x", settings$chunk_size, "\n")
+message("Use chunk size:", settings$chunk_size, "x", settings$chunk_size, "\n")
 }
 
 }

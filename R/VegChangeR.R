@@ -62,18 +62,18 @@ get_VC_optimized0 <- function(inputRAST,
   # Set memory options based on processing choice
   if(processing_option == "medium") {
     terraOptions(memfrac = 0.5)
-    cat("Low memory mode: Using 50% of available RAM\n")
+    message("Low memory mode: Using 50% of available RAM\n")
   } else if(processing_option == "high") {
     terraOptions(memfrac = 0.7)
-    cat("High processing mode: Using 70% of available RAM\n")
+    message("High processing mode: Using 70% of available RAM\n")
   } else if(processing_option == "lowmem") {
     terraOptions(memfrac = 0.3, tempdir = "D:/temp")
-    cat("Very low memory mode: Using 30% of available RAM\n")
+    message("Very low memory mode: Using 30% of available RAM\n")
   } else if(processing_option == "aggressive") {
     terraOptions(memfrac = 0.9)
-    cat("Aggressive mode: Using 90% of available RAM for maximum performance\n")
+    message("Aggressive mode: Using 90% of available RAM for maximum performance\n")
   } else {
-    cat("Auto memory mode: Letting terra manage memory\n")
+    message("Auto memory mode: Letting terra manage memory\n")
   }
   
   # Get the dates from layer names and handle duplicates
@@ -98,7 +98,7 @@ get_VC_optimized0 <- function(inputRAST,
     stop("Target date ", targetDATE, " not found in raster layers")
   }
   
-  cat("Target layer:", sorted_names[target_idx], "\n")
+  message("Target layer:", sorted_names[target_idx], "\n")
   
   # Function to find the closest available date with seasonal consideration
   find_seasonal_comparison = function(base_date, years_back = 0, approximate_days = NULL) {
@@ -129,20 +129,20 @@ get_VC_optimized0 <- function(inputRAST,
   }
   
   # Find comparison layers
-  cat("Finding comparison dates...\n")
+  message("Finding comparison dates...\n")
   twoW_info = find_seasonal_comparison(target_date, approximate_days = 14)
   oneM_info = find_seasonal_comparison(target_date, approximate_days = 30)
   oneY_info = find_seasonal_comparison(target_date, years_back = 1)
   fiveY_info = find_seasonal_comparison(target_date, years_back = 5)
   
-  cat("Comparison layers found:\n")
-  cat("2 weeks before:", twoW_info$name, "(difference:", twoW_info$diff_days, "days)\n")
-  cat("1 month before:", oneM_info$name, "(difference:", oneM_info$diff_days, "days)\n")
-  cat("1 year before:", oneY_info$name, "(difference:", oneY_info$diff_days, "days)\n")
-  cat("5 years before:", fiveY_info$name, "(difference:", fiveY_info$diff_days, "days)\n")
+  message("Comparison layers found:\n")
+  message("2 weeks before:", twoW_info$name, "(difference:", twoW_info$diff_days, "days)\n")
+  message("1 month before:", oneM_info$name, "(difference:", oneM_info$diff_days, "days)\n")
+  message("1 year before:", oneY_info$name, "(difference:", oneY_info$diff_days, "days)\n")
+  message("5 years before:", fiveY_info$name, "(difference:", fiveY_info$diff_days, "days)\n")
   
   # Get the raster layers
-  cat("Loading target and comparison layers...\n")
+  message("Loading target and comparison layers...\n")
   target_layer = sorted_rast[[target_idx]]
   twoW_layer = sorted_rast[[twoW_info$idx]]
   oneM_layer = sorted_rast[[oneM_info$idx]]
@@ -151,18 +151,18 @@ get_VC_optimized0 <- function(inputRAST,
   
   # Enhanced function to calculate vegetation change with stable vegetation
   calculate_change_with_stable = function(current, previous, period_name) {
-    cat("Calculating", period_name, "changes with stable vegetation...\n")
+    message("Calculating", period_name, "changes with stable vegetation...\n")
     
     # Process in chunks for very large rasters (only in "high" and "lowmem" modes)
     if(processing_option %in% c("high", "lowmem") && ncell(current) > 1e7) {
-      cat("  Large raster detected, processing in chunks...\n")
+      message("  Large raster detected, processing in chunks...\n")
       
       change_rast = rast(current)
       min_blocks = ifelse(processing_option == "lowmem", 20, 10)
       bs = blockSize(change_rast, minblocks = min_blocks)
       
       for (i in 1:bs$n) {
-        cat("  Processing chunk", i, "of", bs$n, "\n")
+        message("  Processing chunk", i, "of", bs$n, "\n")
         
         # Read chunks from both rasters
         v_current = readValues(current, bs$row[i], bs$nrows[i])
@@ -233,7 +233,7 @@ get_VC_optimized0 <- function(inputRAST,
   }
   
   # Calculate changes for each time period
-  cat("Calculating vegetation changes with stable category...\n")
+  message("Calculating vegetation changes with stable category...\n")
   twoW_change = calculate_change_with_stable(target_layer, twoW_layer, "2-week")
   oneM_change = calculate_change_with_stable(target_layer, oneM_layer, "1-month")
   oneY_change = calculate_change_with_stable(target_layer, oneY_layer, "1-year")
@@ -274,8 +274,8 @@ get_VC_optimized0 <- function(inputRAST,
     )
   )
   
-  cat("Vegetation change calculation completed successfully!\n")
-  cat("Final values: -1 (loss), 0 (stable), 1 (gain), NA (non-vegetated)\n")
+  message("Vegetation change calculation completed successfully!\n")
+  message("Final values: -1 (loss), 0 (stable), 1 (gain), NA (non-vegetated)\n")
   return(result_list)
 }
 
@@ -316,19 +316,19 @@ get_VC_optimized <- function(inputRAST,
   # Set memory options based on processing choice - using your suggested fractions
   if(processing_option == "medium") {
     terraOptions(memfrac = 0.5)  # Use 50% of RAM
-    cat("Low memory mode: Using 50% of available RAM\n")
+    message("Low memory mode: Using 50% of available RAM\n")
   } else if(processing_option == "high") {
     terraOptions(memfrac = 0.7)  # Use 70% of RAM
-    cat("High processing mode: Using 70% of available RAM\n")
+    message("High processing mode: Using 70% of available RAM\n")
   } else if(processing_option == "lowmem") {
     terraOptions(memfrac = 0.3, tempdir = "D:/temp")  # Use 30% RAM and custom temp dir
-    cat("Very low memory mode: Using 30% of available RAM\n")
+    message("Very low memory mode: Using 30% of available RAM\n")
   } else if(processing_option == "aggressive") {
     terraOptions(memfrac = 0.9)  # Use 90% of RAM for maximum speed
-    cat("Aggressive mode: Using 90% of available RAM for maximum performance\n")
+    message("Aggressive mode: Using 90% of available RAM for maximum performance\n")
   } else {
     # auto mode - let terra handle it (usually around 60-70%)
-    cat("Auto memory mode: Letting terra manage memory\n")
+    message("Auto memory mode: Letting terra manage memory\n")
   }
   
   # Get the dates from layer names and handle duplicates
@@ -355,7 +355,7 @@ get_VC_optimized <- function(inputRAST,
     stop("Target date ", targetDATE, " not found in raster layers")
   }
   
-  cat("Target layer:", sorted_names[target_idx], "\n")
+  message("Target layer:", sorted_names[target_idx], "\n")
   
   # Function to find the closest available date with seasonal consideration
   find_seasonal_comparison = function(base_date, years_back = 0, approximate_days = NULL) {
@@ -390,20 +390,20 @@ get_VC_optimized <- function(inputRAST,
   }
   
   # Find comparison layers with seasonal consideration
-  cat("Finding comparison dates...\n")
+  message("Finding comparison dates...\n")
   twoW_info = find_seasonal_comparison(target_date, approximate_days = 14)
   oneM_info = find_seasonal_comparison(target_date, approximate_days = 30)
   oneY_info = find_seasonal_comparison(target_date, years_back = 1)
   fiveY_info = find_seasonal_comparison(target_date, years_back = 5)
   
-  cat("Comparison layers found:\n")
-  cat("2 weeks before:", twoW_info$name, "(difference:", twoW_info$diff_days, "days)\n")
-  cat("1 month before:", oneM_info$name, "(difference:", oneM_info$diff_days, "days)\n")
-  cat("1 year before:", oneY_info$name, "(difference:", oneY_info$diff_days, "days)\n")
-  cat("5 years before:", fiveY_info$name, "(difference:", fiveY_info$diff_days, "days)\n")
+  message("Comparison layers found:\n")
+  message("2 weeks before:", twoW_info$name, "(difference:", twoW_info$diff_days, "days)\n")
+  message("1 month before:", oneM_info$name, "(difference:", oneM_info$diff_days, "days)\n")
+  message("1 year before:", oneY_info$name, "(difference:", oneY_info$diff_days, "days)\n")
+  message("5 years before:", fiveY_info$name, "(difference:", fiveY_info$diff_days, "days)\n")
   
   # Get the raster layers
-  cat("Loading target and comparison layers...\n")
+  message("Loading target and comparison layers...\n")
   target_layer = sorted_rast[[target_idx]]
   twoW_layer = sorted_rast[[twoW_info$idx]]
   oneM_layer = sorted_rast[[oneM_info$idx]]
@@ -412,11 +412,11 @@ get_VC_optimized <- function(inputRAST,
   
   # Memory-efficient function to calculate vegetation change
   calculate_change_efficient = function(current, previous, period_name) {
-    cat("Calculating", period_name, "changes...\n")
+    message("Calculating", period_name, "changes...\n")
     
     # Process in chunks for very large rasters (only in "high" and "lowmem" modes)
     if(processing_option %in% c("high", "lowmem") && ncell(current) > 1e7) {
-      cat("  Large raster detected, processing in chunks...\n")
+      message("  Large raster detected, processing in chunks...\n")
       
       # Calculate difference in chunks
       change_rast = rast(current)
@@ -425,7 +425,7 @@ get_VC_optimized <- function(inputRAST,
       bs = blockSize(change_rast, minblocks = min_blocks)
       
       for (i in 1:bs$n) {
-        cat("  Processing chunk", i, "of", bs$n, "\n")
+        message("  Processing chunk", i, "of", bs$n, "\n")
         # Read chunks from both rasters
         v_current = readValues(current, bs$row[i], bs$nrows[i])
         v_previous = readValues(previous, bs$row[i], bs$nrows[i])
@@ -473,7 +473,7 @@ get_VC_optimized <- function(inputRAST,
   }
   
   # Calculate changes for each time period
-  cat("Calculating vegetation changes...\n")
+  message("Calculating vegetation changes...\n")
   twoW_change = calculate_change_efficient(target_layer, twoW_layer, "2-week")
   oneM_change = calculate_change_efficient(target_layer, oneM_layer, "1-month")
   oneY_change = calculate_change_efficient(target_layer, oneY_layer, "1-year")
@@ -527,9 +527,9 @@ get_VC_optimized <- function(inputRAST,
     )
   )
   
-  cat("Vegetation change calculation completed successfully!\n")
-  cat("Memory mode used:", processing_option, "\n")
-  cat("Note: 0 values (no change) have been masked out - only vegetation gain (+1) and loss (-1) remain\n")
+  message("Vegetation change calculation completed successfully!\n")
+  message("Memory mode used:", processing_option, "\n")
+  message("Note: 0 values (no change) have been masked out - only vegetation gain (+1) and loss (-1) remain\n")
   return(result_list)
 }
 
@@ -573,7 +573,7 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
     optimal_settings = CHUNKWISE_optimal_memfrac()
     mem_fraction = optimal_settings$memfrac
     chunk_size = optimal_settings$chunk_size
-    cat("Auto-optimized settings applied\n")
+    message("Auto-optimized settings applied\n")
   } else {
     # Use custom settings
     mem_fraction = ifelse(is.null(custom_memfrac), 0.6, custom_memfrac)
@@ -583,9 +583,9 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
   # Set memory options
   terraOptions(memfrac = mem_fraction, tempdir = temp_dir, tolerance = 0.1)
   
-  cat("Disk-based chunk-wise processing: Using", chunk_size, "x", chunk_size, "pixel chunks\n")
-  cat("Memory fraction:", mem_fraction, "(", mem_fraction*100, "% RAM)\n")
-  cat("Temporary directory:", temp_dir, "\n")
+  message("Disk-based chunk-wise processing: Using", chunk_size, "x", chunk_size, "pixel chunks\n")
+  message("Memory fraction:", mem_fraction, "(", mem_fraction*100, "% RAM)\n")
+  message("Temporary directory:", temp_dir, "\n")
   
   # Date processing
   layer_names = names(inputRAST)
@@ -611,7 +611,7 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
     stop("Target date ", targetDATE, " not found in raster layers")
   }
   
-  cat("Target layer:", sorted_names[target_idx], "\n")
+  message("Target layer:", sorted_names[target_idx], "\n")
   
   # Function to find the closest available date with seasonal consideration
   find_seasonal_comparison = function(base_date, years_back = 0, approximate_days = NULL) {
@@ -646,20 +646,20 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
   }
   
   # Find comparison layers with seasonal consideration
-  cat("Finding comparison dates...\n")
+  message("Finding comparison dates...\n")
   twoW_info = find_seasonal_comparison(target_date, approximate_days = 14)
   oneM_info = find_seasonal_comparison(target_date, approximate_days = 30)
   oneY_info = find_seasonal_comparison(target_date, years_back = 1)
   fiveY_info = find_seasonal_comparison(target_date, years_back = 5)
   
-  cat("Comparison layers found:\n")
-  cat("2 weeks before:", twoW_info$name, "(difference:", twoW_info$diff_days, "days)\n")
-  cat("1 month before:", oneM_info$name, "(difference:", oneM_info$diff_days, "days)\n")
-  cat("1 year before:", oneY_info$name, "(difference:", oneY_info$diff_days, "days)\n")
-  cat("5 years before:", fiveY_info$name, "(difference:", fiveY_info$diff_days, "days)\n")
+  message("Comparison layers found:\n")
+  message("2 weeks before:", twoW_info$name, "(difference:", twoW_info$diff_days, "days)\n")
+  message("1 month before:", oneM_info$name, "(difference:", oneM_info$diff_days, "days)\n")
+  message("1 year before:", oneY_info$name, "(difference:", oneY_info$diff_days, "days)\n")
+  message("5 years before:", fiveY_info$name, "(difference:", fiveY_info$diff_days, "days)\n")
   
   # Get the raster layers
-  cat("Loading target and comparison layers...\n")
+  message("Loading target and comparison layers...\n")
   target_layer = sorted_rast[[target_idx]]
   twoW_layer = sorted_rast[[twoW_info$idx]]
   oneM_layer = sorted_rast[[oneM_info$idx]]
@@ -674,13 +674,13 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
   row_chunks = ceiling(nrows / chunk_size)
   total_chunks = col_chunks * row_chunks
   
-  cat("Dividing raster into", total_chunks, "chunks (", col_chunks, "x", row_chunks, ")\n")
-  cat("Estimated memory per chunk: ~", 
+  message("Dividing raster into", total_chunks, "chunks (", col_chunks, "x", row_chunks, ")\n")
+  message("Estimated memory per chunk: ~", 
       round((chunk_size * chunk_size * 4 * 8 * 6) / 1024 / 1024, 1), "MB\n\n")
   
   # Create output files on disk
   output_files = c()
-  cat("Creating output raster files on disk...\n")
+  message("Creating output raster files on disk...\n")
   
   # Initialize output rasters with NA values using terra's efficient method
   for(period in c("twoW", "oneM", "oneY", "fiveY")) {
@@ -700,7 +700,7 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
     # Write to disk
     writeRaster(out_rast, filename = output_file, overwrite = TRUE, NAflag = -9999)
     output_files[period] = output_file
-    cat("Created:", output_file, "\n")
+    message("Created:", output_file, "\n")
   }
   
   # Function to process a single chunk and write to disk 
@@ -797,13 +797,13 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
     
     # Progress update
     if(chunk_id %% 10 == 0 || chunk_id == total_chunks) {
-      cat("Completed chunk", chunk_id, "of", total_chunks, 
+      message("Completed chunk", chunk_id, "of", total_chunks, 
           "(", round(chunk_id/total_chunks*100, 1), "%)\n")
     }
   } 
   
   # Process all chunks
-  cat("Starting chunk-wise processing...\n")
+  message("Starting chunk-wise processing...\n")
   chunk_counter = 1
   
   for (row_start in seq(1, nrows, by = chunk_size)) {
@@ -820,7 +820,7 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
   }
   
   # Load the final results from disk
-  cat("Loading final results from disk...\n")
+  message("Loading final results from disk...\n")
   twoW_output = rast(output_files["twoW"])
   oneM_output = rast(output_files["oneM"])
   oneY_output = rast(output_files["oneY"])
@@ -859,10 +859,10 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
     )
   )
   
-  cat("\n=== PROCESSING COMPLETED SUCCESSFULLY ===\n")
-  cat("Total chunks processed:", total_chunks, "\n")
-  cat("Output files saved in:", temp_dir, "\n")
-  cat("Final values: -1 (loss), 0 (stable), 1 (gain), NA (non-vegetated)\n")
+  message("\n=== PROCESSING COMPLETED SUCCESSFULLY ===\n")
+  message("Total chunks processed:", total_chunks, "\n")
+  message("Output files saved in:", temp_dir, "\n")
+  message("Final values: -1 (loss), 0 (stable), 1 (gain), NA (non-vegetated)\n")
   
   return(result_list)
 }
@@ -884,7 +884,7 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
 #' @examples
 #' \dontrun{
 #' settings <- CHUNKWISE_optimal_memfrac()
-#' cat("Use chunk size:", settings$chunk_size, "x", settings$chunk_size, "\n")
+#' message("Use chunk size:", settings$chunk_size, "x", settings$chunk_size, "\n")
 #' }
 #'
 #' @export
@@ -919,11 +919,11 @@ CHUNKWISE_optimal_memfrac <- function(total_ram_gb = NULL) {
     chunk_size = 1500
   }
   
-  cat("=== OPTIMAL MEMORY SETTINGS ===\n")
-  cat("Total RAM:", round(total_ram_gb, 1), "GB\n")
-  cat("Recommended memory fraction:", memfrac, "(", memfrac*100, "% )\n")
-  cat("Recommended chunk size:", chunk_size, "x", chunk_size, "pixels\n")
-  cat("Estimated RAM usage:", round(total_ram_gb * memfrac, 1), "GB\n")
+  message("=== OPTIMAL MEMORY SETTINGS ===\n")
+  message("Total RAM:", round(total_ram_gb, 1), "GB\n")
+  message("Recommended memory fraction:", memfrac, "(", memfrac*100, "% )\n")
+  message("Recommended chunk size:", chunk_size, "x", chunk_size, "pixels\n")
+  message("Estimated RAM usage:", round(total_ram_gb * memfrac, 1), "GB\n")
   
   return(list(memfrac = memfrac, chunk_size = chunk_size, total_ram_gb = total_ram_gb))
 }
@@ -955,7 +955,7 @@ CHUNKWISE_optimal_memfrac <- function(total_ram_gb = NULL) {
 #'
 #' @export
 CHUNKWISE_memo_monitor <- function() {
-  cat("=== MEMORY MONITOR ===\n")
+  message("=== MEMORY MONITOR ===\n")
   
   if(.Platform$OS.type == "windows") {
     # Windows memory info
@@ -965,15 +965,15 @@ CHUNKWISE_memo_monitor <- function() {
     free_mem = as.numeric(gsub("FreePhysicalMemory=", "", 
                                mem_info[grep("FreePhysicalMemory", mem_info)])) / 1024 / 1024
     
-    cat("Total RAM:", round(total_mem, 1), "GB\n")
-    cat("Free RAM:", round(free_mem, 1), "GB\n")
-    cat("Used RAM:", round(total_mem - free_mem, 1), "GB\n")
+    message("Total RAM:", round(total_mem, 1), "GB\n")
+    message("Free RAM:", round(free_mem, 1), "GB\n")
+    message("Used RAM:", round(total_mem - free_mem, 1), "GB\n")
   }
   
   # R memory info using gc()
   mem_info = gc()
   total_mem = sum(mem_info[, "used"]) / 1024  # Convert to MB
-  cat("R memory usage:", round(total_mem, 1), "MB\n")
+  message("R memory usage:", round(total_mem, 1), "MB\n")
 }
 
 #' Save vegetation change results
@@ -998,7 +998,7 @@ save_changes <- function(vc_changes, output_dir = "D:/HealthMetric") {
   # Save metadata
   saveRDS(vc_changes$metadata, file.path(oudir, "metadata_VCC.rds"))
   
-  cat("Change rasters saved to:", oudir, "\n")
+  message("Change rasters saved to:", oudir, "\n")
 }
 
 #' Extract vegetation changes to polygon features
@@ -1024,7 +1024,7 @@ extract_changes_exact <- function(vc_changes, polygons, max_polygons = NULL) {
   # Option to process subset for testing
   if(!is.null(max_polygons) && nrow(polygons) > max_polygons) {
     polygons = polygons[1:max_polygons, ]
-    cat("Processing subset of", max_polygons, "polygons\n")
+    message("Processing subset of", max_polygons, "polygons\n")
   }
   
   # Extract target date from metadata and format it
@@ -1039,22 +1039,22 @@ extract_changes_exact <- function(vc_changes, polygons, max_polygons = NULL) {
     paste0("fiveY_change_", date_fix)
   )
   
-  cat("Using date as column suffix:", date_fix, "\n")
+  message("Using date as column suffix:", date_fix, "\n")
   
   # Transform polygons to match raster CRS
   polygons_proj = st_transform(polygons, crs(vc_changes$twoW))
   
   # Use exactextractr for precise extraction with dynamic column names
-  cat("Extracting 2-week changes...\n")
+  message("Extracting 2-week changes...\n")
   polygons_proj[[change_cols[1]]] = exactextractr::exact_extract(vc_changes$twoW, polygons_proj, 'mean')
   
-  cat("Extracting 1-month changes...\n")
+  message("Extracting 1-month changes...\n")
   polygons_proj[[change_cols[2]]] = exactextractr::exact_extract(vc_changes$oneM, polygons_proj, 'mean')
   
-  cat("Extracting 1-year changes...\n")
+  message("Extracting 1-year changes...\n")
   polygons_proj[[change_cols[3]]] = exactextractr::exact_extract(vc_changes$oneY, polygons_proj, 'mean')
   
-  cat("Extracting 5-year changes...\n")
+  message("Extracting 5-year changes...\n")
   polygons_proj[[change_cols[4]]] = exactextractr::exact_extract(vc_changes$fiveY, polygons_proj, 'mean')
   
   # Round change columns to 3 decimal places
@@ -1092,7 +1092,7 @@ analyze_vegetation_changes <- function(polygons_with_changes, output_dir = NULL)
     stop("No change columns found in the data. Make sure you used extract_changes_exact() first.")
   }
   
-  cat("Detected change columns:", paste(change_cols, collapse = ", "), "\n")
+  message("Detected change columns:", paste(change_cols, collapse = ", "), "\n")
   
   # Summary statistics
   changes_df = polygons_with_changes %>% 
@@ -1145,7 +1145,7 @@ analyze_vegetation_changes <- function(polygons_with_changes, output_dir = NULL)
     }
   }
   
-  cat(paste(output_lines, collapse = "\n"), "\n")
+  message(paste(output_lines, collapse = "\n"), "\n")
   
   # Write to files (.txt and .csv) if output_dir is provided
   if(!is.null(output_dir)) {
@@ -1155,14 +1155,14 @@ analyze_vegetation_changes <- function(polygons_with_changes, output_dir = NULL)
     output_file = file.path(output_dir, paste0("VCC_summary_", timestamp, ".txt"))
     
     writeLines(output_lines, output_file)
-    cat("Summary statistics saved to:", output_file, "\n")
+    message("Summary statistics saved to:", output_file, "\n")
     
     csv_file = file.path(output_dir, paste0("VCC_stats_", timestamp, ".csv"))
     
     if(length(results_list) > 0) {
       stats_df = do.call(rbind, lapply(results_list, as.data.frame))
       write.csv(stats_df, csv_file, row.names = FALSE)
-      cat("Detailed statistics saved to:", csv_file, "\n")
+      message("Detailed statistics saved to:", csv_file, "\n")
     }
   }
   
@@ -1372,7 +1372,7 @@ classify_change_colors <- function(polygons_with_changes,
 recommend_memory_mode <- function(available_ram_gb = NULL) {
   if(is.null(available_ram_gb)) {
     # Simple recommendation based on common scenarios
-    cat("
+    message("
 MEMORY MODE GUIDE:
 - 'lowmem': 30% RAM - Use when running many other applications
 - 'medium':  50% RAM - Good balance for normal multi-tasking  
@@ -1398,9 +1398,9 @@ monitor_memory <- function() {
   if(.Platform$OS.type == "windows") {
     mem = system("wmic OS get FreePhysicalMemory /Value", intern = TRUE)
     mem = as.numeric(gsub("FreePhysicalMemory=", "", mem[grep("FreePhysicalMemory", mem)])) / 1024 / 1024
-    cat("Available RAM:", round(mem, 1), "GB\n")
+    message("Available RAM:", round(mem, 1), "GB\n")
   } else {
-    cat("Memory monitoring available on Windows only\n")
+    message("Memory monitoring available on Windows only\n")
   }
 }
 
@@ -1413,7 +1413,7 @@ clear_terra_cache <- function() {
   tmp_files = list.files(tempdir(), pattern = "spat_", full.names = TRUE)
   if(length(tmp_files) > 0) {
     file.remove(tmp_files)
-    cat("Removed", length(tmp_files), "temporary terra files\n")
+    message("Removed", length(tmp_files), "temporary terra files\n")
   }
   gc()
 }
