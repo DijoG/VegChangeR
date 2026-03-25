@@ -674,7 +674,7 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
   row_chunks = ceiling(nrows / chunk_size)
   total_chunks = col_chunks * row_chunks
   
-  message("Dividing raster into", total_chunks, "chunks (", col_chunks, "x", row_chunks, ")\n")
+  message("Dividing raster into ", total_chunks, " chunks (", col_chunks, "x", row_chunks, ")\n")
   message("Estimated memory per chunk: ~", 
       round((chunk_size * chunk_size * 4 * 8 * 6) / 1024 / 1024, 1), "MB\n\n")
   
