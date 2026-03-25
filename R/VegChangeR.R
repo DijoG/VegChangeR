@@ -575,7 +575,6 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
     chunk_size = optimal_settings$chunk_size
     message("Auto-optimized settings applied\n")
   } else {
-    # Use custom settings
     mem_fraction = ifelse(is.null(custom_memfrac), 0.6, custom_memfrac)
     chunk_size = ifelse(is.null(custom_chunk_size), 800, custom_chunk_size)
   }
@@ -583,21 +582,21 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
   # Set memory options
   terraOptions(memfrac = mem_fraction, tempdir = temp_dir, tolerance = 0.1)
   
-  message("Disk-based chunk-wise processing: Using", chunk_size, "x", chunk_size, "pixel chunks\n")
-  message("Memory fraction:", mem_fraction, "(", mem_fraction*100, "% RAM)\n")
-  message("Temporary directory:", temp_dir, "\n")
+  message("Disk-based chunk-wise processing: Using ", chunk_size, " x ", chunk_size, " pixel chunks\n")
+  message("Memory fraction: ", mem_fraction, " (", mem_fraction*100, "% RAM)\n")
+  message("Temporary directory: ", temp_dir, "\n")
   
   # Date processing
   layer_names = names(inputRAST)
   dates = as.Date(layer_names)
   
-  # Remove duplicate dates by keeping the first occurrence
+  # Remove duplicate dates
   unique_indices = !duplicated(dates)
   unique_rast = inputRAST[[unique_indices]]
   unique_dates = dates[unique_indices]
   unique_names = layer_names[unique_indices]
   
-  # Sort by date to ensure chronological order
+  # Sort by date
   date_order = order(unique_dates)
   sorted_rast = unique_rast[[date_order]]
   sorted_dates = unique_dates[date_order]
@@ -611,27 +610,24 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
     stop("Target date ", targetDATE, " not found in raster layers")
   }
   
-  message("Target layer:", sorted_names[target_idx], "\n")
+  message("Target layer: ", sorted_names[target_idx], "\n")
   
-  # Function to find the closest available date with seasonal consideration
-  find_seasonal_comparison = function(base_date, years_back = 0, approximate_days = NULL) {
+  # Function to find comparison dates
+  find_comparison = function(base_date, years_back = 0, approximate_days = NULL) {
     if (!is.null(approximate_days)) {
-      # For short-term comparisons (weeks, months)
       target_lookup_date = base_date - approximate_days
     } else {
-      # For year-based comparisons - try to match the same seasonal period
       target_lookup_date = base_date - years(years_back)
     }
     
-    # Find the closest date to the lookup date within a reasonable window
     date_diffs = abs(sorted_dates - target_lookup_date)
     
-    # For year comparisons, prioritize dates within ±30 days of the target seasonal period
+    # For year comparisons, prioritize seasonal matches
     if (years_back > 0) {
-      seasonal_window = 30  # days
+      seasonal_window = 30
       in_season = abs(as.numeric(sorted_dates - target_lookup_date)) <= seasonal_window
       if (any(in_season)) {
-        date_diffs[!in_season] = Inf  # Penalize dates outside seasonal window
+        date_diffs[!in_season] = Inf
       }
     }
     
@@ -645,18 +641,18 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
     ))
   }
   
-  # Find comparison layers with seasonal consideration
+  # Find comparison layers
   message("Finding comparison dates...\n")
-  twoW_info = find_seasonal_comparison(target_date, approximate_days = 14)
-  oneM_info = find_seasonal_comparison(target_date, approximate_days = 30)
-  oneY_info = find_seasonal_comparison(target_date, years_back = 1)
-  fiveY_info = find_seasonal_comparison(target_date, years_back = 5)
+  twoW_info = find_comparison(target_date, approximate_days = 14)
+  oneM_info = find_comparison(target_date, approximate_days = 30)
+  oneY_info = find_comparison(target_date, years_back = 1)
+  fiveY_info = find_comparison(target_date, years_back = 5)
   
   message("Comparison layers found:\n")
-  message("2 weeks before:", twoW_info$name, "(difference:", twoW_info$diff_days, "days)\n")
-  message("1 month before:", oneM_info$name, "(difference:", oneM_info$diff_days, "days)\n")
-  message("1 year before:", oneY_info$name, "(difference:", oneY_info$diff_days, "days)\n")
-  message("5 years before:", fiveY_info$name, "(difference:", fiveY_info$diff_days, "days)\n")
+  message("2 weeks before: ", twoW_info$name, " (difference: ", twoW_info$diff_days, " days)\n")
+  message("1 month before: ", oneM_info$name, " (difference: ", oneM_info$diff_days, " days)\n")
+  message("1 year before: ", oneY_info$name, " (difference: ", oneY_info$diff_days, " days)\n")
+  message("5 years before: ", fiveY_info$name, " (difference: ", fiveY_info$diff_days, " days)\n")
   
   # Get the raster layers
   message("Loading target and comparison layers...\n")
@@ -674,36 +670,31 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
   row_chunks = ceiling(nrows / chunk_size)
   total_chunks = col_chunks * row_chunks
   
-  message("Dividing raster into", total_chunks, "chunks (", col_chunks, "x", row_chunks, ")\n")
+  message("Dividing raster into ", total_chunks, " chunks (", col_chunks, " x ", row_chunks, ")\n")
   message("Estimated memory per chunk: ~", 
-      round((chunk_size * chunk_size * 4 * 8 * 6) / 1024 / 1024, 1), "MB\n\n")
+          round((chunk_size * chunk_size * 4 * 8 * 6) / 1024 / 1024, 1), " MB\n\n")
   
   # Create output files on disk
   output_files = c()
   message("Creating output raster files on disk...\n")
   
-  # Initialize output rasters with NA values using terra's efficient method
+  # Initialize output rasters with NA values
   for(period in c("twoW", "oneM", "oneY", "fiveY")) {
     output_file = file.path(temp_dir, paste0(period, "_change_", targetDATE, ".tif"))
     
-    # Create output raster with same properties as target layer
     out_rast = rast(
       ext(target_layer),
       nrows = nrows,
       ncols = ncols,
       crs = crs(target_layer)
     )
-    
-    # Initialize with NA values efficiently
     values(out_rast) = NA
-    
-    # Write to disk
     writeRaster(out_rast, filename = output_file, overwrite = TRUE, NAflag = -9999)
     output_files[period] = output_file
-    message("Created:", output_file, "\n")
+    message("Created: ", output_file, "\n")
   }
   
-  # Function to process a single chunk and write to disk 
+  # Process chunk with proper NA handling
   process_chunk_to_disk = function(row_start, row_end, col_start, col_end, chunk_id, total_chunks) {
     # Calculate chunk extent
     chunk_ext = ext(
@@ -720,30 +711,32 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
     oneY_chunk = crop(oneY_layer, chunk_ext)
     fiveY_chunk = crop(fiveY_layer, chunk_ext)
     
-    # Function to process vegetation change for a period
+    # Function to process vegetation change with proper NA handling
     process_period_chunk = function(current, previous) {
-      # Calculate change (-1, 0, 1)
-      change = current - previous
+      # Create result raster
+      result = rast(current)
+      values(result) = NA
       
-      # Calculate stable vegetation (2)
-      sum_layers = current + previous
-      stable = ifel(sum_layers == 2, 2, 0)
+      # Get values as vectors for efficient processing
+      curr_vals = values(current)
+      prev_vals = values(previous)
       
-      # Combine both layers
-      combined = change + stable
+      # Case 1: Vegetation loss (current NA or 0, previous 1)
+      loss_mask = (is.na(curr_vals) | curr_vals == 0) & prev_vals == 1 & !is.na(prev_vals)
       
-      # Apply masking
-      valid_mask = !is.na(current) & !is.na(previous)
-      vegetation_mask = (current == 1) | (previous == 1)
-      final_mask = valid_mask & vegetation_mask
+      # Case 2: Vegetation gain (current 1, previous NA or 0)
+      gain_mask = curr_vals == 1 & !is.na(curr_vals) & (is.na(prev_vals) | prev_vals == 0)
       
-      change_final = combined * final_mask
-      change_final[!final_mask] = NA
-      change_final = ifel(change_final == 2, 0,                       # Stable vegetation → 0
-                          ifel(change_final == 0, NA, change_final))  # Stable non-veg → NA  # Stable non-veg → NA
-      change_final = ifel(change_final == 3, 1, change_final)   # Edge case → 1
+      # Case 3: Stable vegetation (both 1)
+      stable_mask = curr_vals == 1 & !is.na(curr_vals) & prev_vals == 1 & !is.na(prev_vals)
       
-      return(change_final)
+      # Apply the masks
+      result[loss_mask] = -1
+      result[gain_mask] = 1
+      result[stable_mask] = 0
+      
+      # All other cases remain NA
+      return(result)
     }
     
     # Process all periods for this chunk
@@ -752,7 +745,7 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
     oneY_result = process_period_chunk(target_chunk, oneY_chunk)
     fiveY_result = process_period_chunk(target_chunk, fiveY_chunk)
     
-    # Write each result to its respective disk file using terra's mosaic approach
+    # Write each result to its respective disk file
     periods = list(
       twoW = list(result = twoW_result, file = output_files["twoW"]),
       oneM = list(result = oneM_result, file = output_files["oneM"]),
@@ -766,28 +759,34 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
       # Read existing output raster
       output_rast = rast(period_data$file)
       
-      # Get the chunk result with proper extent and resolution
-      chunk_result = period_data$result
+      # Get values to update
+      output_vals = values(output_rast)
+      chunk_vals = values(period_data$result)
       
-      # Use terra's mosaic function to combine chunks properly
-      # First, create a template with NA values for the entire raster
-      template = output_rast
-      values(template) = NA
+      # Calculate row and column indices for this chunk
+      rows_in_chunk = row_start:row_end
+      cols_in_chunk = col_start:col_end
       
-      # Crop the template to our chunk extent
-      template_chunk = crop(template, chunk_ext)
+      # Update values
+      for(i in 1:length(rows_in_chunk)) {
+        for(j in 1:length(cols_in_chunk)) {
+          row_idx = rows_in_chunk[i]
+          col_idx = cols_in_chunk[j]
+          val_pos = (row_idx - 1) * ncols + col_idx
+          chunk_pos = (i - 1) * length(cols_in_chunk) + j
+          
+          if(!is.na(chunk_vals[chunk_pos])) {
+            output_vals[val_pos] = chunk_vals[chunk_pos]
+          }
+        }
+      }
       
-      # Replace the template chunk values with our computed values
-      values(template_chunk) = values(chunk_result)
-      
-      # Mosaic the chunk into the output raster
-      merged = mosaic(output_rast, template_chunk, fun = "first")
-      
-      # Write the merged result back
-      writeRaster(merged, filename = period_data$file, overwrite = TRUE)
+      # Write updated values back
+      values(output_rast) = output_vals
+      writeRaster(output_rast, filename = period_data$file, overwrite = TRUE)
       
       # Clean up
-      rm(template, template_chunk, merged)
+      rm(output_rast, output_vals, chunk_vals)
     }
     
     # Clean up
@@ -797,10 +796,10 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
     
     # Progress update
     if(chunk_id %% 10 == 0 || chunk_id == total_chunks) {
-      message("Completed chunk", chunk_id, "of", total_chunks, 
-          "(", round(chunk_id/total_chunks*100, 1), "%)\n")
+      message("Completed chunk ", chunk_id, " of ", total_chunks, 
+              " (", round(chunk_id/total_chunks*100, 1), "%)\n")
     }
-  } 
+  }
   
   # Process all chunks
   message("Starting chunk-wise processing...\n")
@@ -832,7 +831,7 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
   names(oneY_output) = paste0("oneY_change_", targetDATE)
   names(fiveY_output) = paste0("fiveY_change_", targetDATE)
   
-  # Clean up original layers
+  # Clean up
   rm(target_layer, twoW_layer, oneM_layer, oneY_layer, fiveY_layer)
   gc()
   
@@ -855,14 +854,17 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
                               chunk_size, "x", chunk_size, "pixel chunks"),
       total_chunks_processed = total_chunks,
       output_files = output_files,
-      temp_dir = temp_dir
+      temp_dir = temp_dir,
+      note = "NA values properly handled: target NA + previous 1 = loss (-1), target 1 + previous NA = gain (1)"
     )
   )
   
   message("\n=== PROCESSING COMPLETED SUCCESSFULLY ===\n")
-  message("Total chunks processed:", total_chunks, "\n")
-  message("Output files saved in:", temp_dir, "\n")
-  message("Final values: -1 (loss), 0 (stable), 1 (gain), NA (non-vegetated)\n")
+  message("Total chunks processed: ", total_chunks, "\n")
+  message("Output files saved in: ", temp_dir, "\n")
+  message("Final values: -1 (loss), 0 (stable), 1 (gain), NA (no data)\n")
+  message("Note: Loss occurs when target has NA but comparison has vegetation\n")
+  message("Note: Gain occurs when target has vegetation but comparison has NA\n")
   
   return(result_list)
 }
