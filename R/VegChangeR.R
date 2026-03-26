@@ -583,7 +583,7 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
   # Set memory options
   terraOptions(memfrac = mem_fraction, tempdir = temp_dir, tolerance = 0.1)
   
-  message("Disk-based chunk-wise processing: Using", chunk_size, "x", chunk_size, "pixel chunks\n")
+  message("Disk-based chunk-wise processing: Using ", chunk_size, "x", chunk_size, " pixel chunks\n")
   message("Memory fraction:", mem_fraction, "(", mem_fraction*100, "% RAM)\n")
   message("Temporary directory:", temp_dir, "\n")
   
@@ -796,8 +796,8 @@ CHUNKWISE_get_VC_TOdisk <- function(inputRAST,
     
     # Progress update
     if(chunk_id %% 10 == 0 || chunk_id == total_chunks) {
-      message("Completed chunk", chunk_id, "of", total_chunks, 
-          "(", round(chunk_id/total_chunks*100, 1), "%)\n")
+      message("Completed chunk ", chunk_id, " of ", total_chunks, 
+          " (", round(chunk_id/total_chunks*100, 1), "%)\n")
     }
   } 
   
